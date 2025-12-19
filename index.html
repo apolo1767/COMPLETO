@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS ERP | Sistema Integral de Gestión</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 850: '#1e293b', 900: '#0f172a', 950: '#020617' },
+                        primary: { 500: '#3b82f6', 600: '#2563eb' }, // Azul Ejecutivo
+                        accent: { 500: '#10b981' } // Verde Finanzas
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .nav-item.active { background: linear-gradient(90deg, #2563eb 0%, transparent 100%); border-left: 4px solid #60a5fa; color: white; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between z-20">
+        <div>
+            <div class="h-20 flex items-center px-8 border-b border-slate-800">
+                <i class="fa-solid fa-cube text-primary-500 text-2xl mr-3"></i>
+                <h1 class="text-xl font-bold tracking-wide text-white">NEXUS <span class="text-primary-500">ERP</span></h1>
+            </div>
+
+            <nav class="mt-6 space-y-1 px-4">
+                <a onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition-all active">
+                    <i class="fa-solid fa-chart-pie mr-3 w-6 text-center"></i> Dashboard
+                </a>
+                <a onclick="navigate('inventory')" id="nav-inventory" class="nav-item group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition-all">
+                    <i class="fa-solid fa-boxes-stacked mr-3 w-6 text-center"></i> Inventario
+                </a>
+                <a onclick="navigate('pos')" id="nav-pos" class="nav-item group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition-all">
+                    <i class="fa-solid fa-cash-register mr-3 w-6 text-center"></i> Ventas (POS)
+                </a>
+                <a onclick="navigate('crm')" id="nav-crm" class="nav-item group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition-all">
+                    <i class="fa-solid fa-users mr-3 w-6 text-center"></i> Clientes / CRM
+                </a>
+                <a onclick="navigate('logistics')" id="nav-logistics" class="nav-item group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition-all">
+                    <i class="fa-solid fa-truck-fast mr-3 w-6 text-center"></i> Logística
+                </a>
+                <a onclick="navigate('finance')" id="nav-finance" class="nav-item group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition-all">
+                    <i class="fa-solid fa-wallet mr-3 w-6 text-center"></i> Finanzas 360
+                </a>
+                <a onclick="navigate('hr')" id="nav-hr" class="nav-item group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition-all">
+                    <i class="fa-solid fa-id-card mr-3 w-6 text-center"></i> RRHH & Nómina
+                </a>
+                <a onclick="navigate('config')" id="nav-config" class="nav-item group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition-all">
+                    <i class="fa-solid fa-gear mr-3 w-6 text-center"></i> Configuración
+                </a>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center">
+                <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold">CEO</div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-white">Admin</p>
+                    <p class="text-xs text-slate-500">Sesión Activa</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto bg-slate-950 p-8 relative" id="main-content">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h2 id="page-title" class="text-3xl font-bold text-white">Dashboard General</h2>
+                <p id="page-subtitle" class="text-slate-400 text-sm mt-1">Visión global del negocio en tiempo real</p>
+            </div>
+            <div class="flex gap-4">
+                <button class="bg-slate-800 p-2 rounded-lg text-slate-400 hover:text-white"><i class="fa-regular fa-bell"></i></button>
+                <button onclick="resetSystem()" class="bg-red-900/30 text-red-400 px-4 py-2 rounded-lg text-sm hover:bg-red-900/50 border border-red-900">Resetear Sistema</button>
+            </div>
+        </header>
+
+        <div id="app-container" class="space-y-6">
+            </div>
+
+    </main>
+
+    <div id="modal-overlay" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div id="modal-content" class="bg-slate-900 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark fa-lg"></i></button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. GESTIÓN DE DATOS (LOCALSTORAGE) ---
+        const DB_KEYS = {
+            INVENTORY: 'nexus_inventory',
+            CLIENTS: 'nexus_clients',
+            SALES: 'nexus_sales',
+            SUPPLIERS: 'nexus_suppliers',
+            FINANCE_MOVEMENTS: 'nexus_finance',
+            EMPLOYEES: 'nexus_employees',
+            CONFIG: 'nexus_config'
+        };
+
+        const generateId = () => Math.random().toString(36).substr(2, 9);
+        const formatMoney = (amount) => new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(amount);
+
+        // Estado Inicial
+        const loadData = (key, defaultData) => {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : defaultData;
+        };
+
+        const saveData = (key, data) => localStorage.setItem(key, JSON.stringify(data));
+
+        // Datos en memoria
+        let db = {
+            inventory: loadData(DB_KEYS.INVENTORY, []),
+            clients: loadData(DB_KEYS.CLIENTS, []),
+            sales: loadData(DB_KEYS.SALES, []),
+            suppliers: loadData(DB_KEYS.SUPPLIERS, []),
+            finance: loadData(DB_KEYS.FINANCE_MOVEMENTS, []),
+            employees: loadData(DB_KEYS.EMPLOYEES, []),
+            config: loadData(DB_KEYS.CONFIG, { companyName: 'Nexus Tech', currency: 'DOP' })
+        };
+
+        // --- 2. SISTEMA DE NAVEGACIÓN ---
+        function navigate(view) {
+            // Actualizar Sidebar
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-${view}`).classList.add('active');
+
+            const container = document.getElementById('app-container');
+            const title = document.getElementById('page-title');
+            const subtitle = document.getElementById('page-subtitle');
+
+            container.innerHTML = ''; // Limpiar vista
+
+            switch(view) {
+                case 'dashboard':
+                    title.innerText = 'Dashboard Ejecutivo';
+                    subtitle.innerText = 'KPIs y Métricas de Rendimiento';
+                    renderDashboard(container);
+                    break;
+                case 'inventory':
+                    title.innerText = 'Inventario Inteligente';
+                    subtitle.innerText = 'Gestión de Stock, IMEIs y Variantes';
+                    renderInventory(container);
+                    break;
+                case 'pos':
+                    title.innerText = 'Punto de Venta (POS)';
+                    subtitle.innerText = 'Facturación rápida y control de caja';
+                    renderPOS(container);
+                    break;
+                case 'crm':
+                    title.innerText = 'Clientes & CRM';
+                    subtitle.innerText = 'Base de datos y fidelización';
+                    renderCRM(container);
+                    break;
+                case 'logistics':
+                    title.innerText = 'Logística & Proveedores';
+                    subtitle.innerText = 'Cadena de suministro y compras';
+                    renderLogistics(container);
+                    break;
+                case 'finance':
+                    title.innerText = 'Finanzas 360';
+                    subtitle.innerText = 'Pérdidas, Ganancias y Flujo de Caja';
+                    renderFinance(container);
+                    break;
+                case 'hr':
+                    title.innerText = 'RRHH & Nómina';
+                    subtitle.innerText = 'Gestión de talento humano';
+                    renderHR(container);
+                    break;
+                case 'config':
+                    title.innerText = 'Configuración del Sistema';
+                    subtitle.innerText = 'Ajustes generales y seguridad';
+                    renderConfig(container);
+                    break;
+            }
+        }
+
+        // --- 3. RENDERS DE VISTAS (LÓGICA VISUAL) ---
+
+        // VISTA DASHBOARD
+        function renderDashboard(container) {
+            // Cálculos básicos
+            const totalSales = db.sales.reduce((acc, sale) => acc + sale.total, 0);
+            const totalCost = db.sales.reduce((acc, sale) => acc + (sale.cost || 0), 0); // Simplificado
+            const grossProfit = totalSales - totalCost;
+            const stockItems = db.inventory.reduce((acc, item) => acc + parseInt(item.qty), 0);
+            const lowStock = db.inventory.filter(i => i.qty < 5).length;
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="glass-panel p-6 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+                        <div class="z-10">
+                            <p class="text-slate-400 text-sm font-medium">Ingresos Totales</p>
+                            <h3 class="text-2xl font-bold text-white mt-1">${formatMoney(totalSales)}</h3>
+                        </div>
+                        <div class="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
+                            <i class="fa-solid fa-arrow-trend-up"></i>
+                        </div>
+                        <div class="absolute -bottom-4 -right-4 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all"></div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+                        <div class="z-10">
+                            <p class="text-slate-400 text-sm font-medium">Utilidad Bruta</p>
+                            <h3 class="text-2xl font-bold text-emerald-400 mt-1">${formatMoney(grossProfit)}</h3>
+                        </div>
+                        <div class="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500">
+                            <i class="fa-solid fa-coins"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+                        <div class="z-10">
+                            <p class="text-slate-400 text-sm font-medium">Unidades en Stock</p>
+                            <h3 class="text-2xl font-bold text-white mt-1">${stockItems}</h3>
+                        </div>
+                        <div class="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500">
+                            <i class="fa-solid fa-box-open"></i>
+                        </div>
+                    </div>
+
+                     <div class="glass-panel p-6 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+                        <div class="z-10">
+                            <p class="text-slate-400 text-sm font-medium">Alertas Stock</p>
+                            <h3 class="text-2xl font-bold text-red-400 mt-1">${lowStock} Items</h3>
+                        </div>
+                        <div class="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="glass-panel p-6 rounded-2xl col-span-2">
+                        <h4 class="text-lg font-bold text-white mb-4">Tendencia de Ventas</h4>
+                        <canvas id="salesChart" height="100"></canvas>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h4 class="text-lg font-bold text-white mb-4">Top Productos</h4>
+                        <div class="space-y-4" id="top-products-list">
+                            <p class="text-sm text-slate-500">Datos insuficientes para mostrar ranking.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Renderizar Gráfica (Dummy Data si está vacío)
+            setTimeout(() => {
+                const ctx = document.getElementById('salesChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
+                        datasets: [{
+                            label: 'Ventas (Semana Actual)',
+                            data: [0, 0, 0, 0, 0, 0, totalSales], // Simplificado para demo
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#334155' } }, x: { grid: { display: false } } } }
+                });
+            }, 100);
+        }
+
+        // VISTA INVENTARIO
+        function renderInventory(container) {
+            container.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex gap-2">
+                        <input type="text" id="search-inventory" placeholder="Buscar por Modelo, IMEI, SKU..." class="bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-2 w-80 focus:outline-none focus:border-primary-500">
+                    </div>
+                    <button onclick="openAddProductModal()" class="bg-primary-600 hover:bg-primary-500 text-white px-6 py-2 rounded-lg font-medium transition-all shadow-lg shadow-primary-500/30">
+                        <i class="fa-solid fa-plus mr-2"></i> Nuevo Producto
+                    </button>
+                </div>
+
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-900 text-slate-400 text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4 border-b border-slate-800">Producto</th>
+                                <th class="p-4 border-b border-slate-800">Categoría</th>
+                                <th class="p-4 border-b border-slate-800">Stock</th>
+                                <th class="p-4 border-b border-slate-800">Costo</th>
+                                <th class="p-4 border-b border-slate-800">Precio Venta</th>
+                                <th class="p-4 border-b border-slate-800">Margen</th>
+                                <th class="p-4 border-b border-slate-800">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-slate-800" id="inventory-table-body">
+                            ${db.inventory.map(item => `
+                                <tr class="hover:bg-slate-800/50 transition-colors">
+                                    <td class="p-4">
+                                        <div class="font-bold text-white">${item.name}</div>
+                                        <div class="text-xs text-slate-500">${item.imei ? 'IMEI: '+item.imei : 'SKU: '+item.id}</div>
+                                    </td>
+                                    <td class="p-4"><span class="bg-slate-800 text-slate-300 px-2 py-1 rounded text-xs">${item.category}</span></td>
+                                    <td class="p-4">
+                                        <span class="${item.qty < 5 ? 'text-red-400 font-bold' : 'text-emerald-400'}">${item.qty} Unid.</span>
+                                    </td>
+                                    <td class="p-4 text-slate-400">${formatMoney(item.cost)}</td>
+                                    <td class="p-4 text-white font-bold">${formatMoney(item.price)}</td>
+                                    <td class="p-4 text-emerald-400">+${formatMoney(item.price - item.cost)}</td>
+                                    <td class="p-4">
+                                        <button class="text-blue-400 hover:text-white mr-2"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="text-red-400 hover:text-white"><i class="fa-solid fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    ${db.inventory.length === 0 ? '<div class="p-8 text-center text-slate-500">No hay productos en inventario.</div>' : ''}
+                </div>
+            `;
+        }
+
+        // VISTA POS (VENTAS)
+        function renderPOS(container) {
+            container.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-140px)]">
+                    <div class="lg:col-span-2 flex flex-col gap-4">
+                        <input type="text" id="pos-search" placeholder="Escanear IMEI o Buscar Producto..." class="bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-3 w-full focus:outline-none focus:border-primary-500">
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 overflow-y-auto pr-2 pb-4">
+                            ${db.inventory.filter(i => i.qty > 0).map(item => `
+                                <div onclick="addToCart('${item.id}')" class="glass-panel p-4 rounded-xl cursor-pointer hover:border-primary-500 transition-all group">
+                                    <div class="text-sm font-bold text-white group-hover:text-primary-400 truncate">${item.name}</div>
+                                    <div class="text-xs text-slate-500 mb-2">${item.category}</div>
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-lg font-bold text-white">${formatMoney(item.price)}</span>
+                                        <span class="text-xs bg-slate-800 px-2 py-1 rounded">Stock: ${item.qty}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-2xl flex flex-col h-full">
+                        <div class="p-4 border-b border-slate-800">
+                            <h3 class="font-bold text-white"><i class="fa-solid fa-cart-shopping mr-2"></i>Venta Actual</h3>
+                        </div>
+                        
+                        <div class="p-4 border-b border-slate-800 bg-slate-900/50">
+                            <div class="flex gap-2">
+                                <select id="pos-client-select" class="w-full bg-slate-800 border border-slate-700 rounded text-sm p-2 text-white">
+                                    <option value="">Seleccionar Cliente General</option>
+                                    ${db.clients.map(c => `<option value="${c.id}">${c.name} ${c.lastname}</option>`).join('')}
+                                </select>
+                                <button onclick="openAddClientModal()" class="bg-slate-700 hover:bg-slate-600 px-3 rounded text-white"><i class="fa-solid fa-user-plus"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto p-4 space-y-2" id="pos-cart-items">
+                            <p class="text-center text-slate-500 text-sm mt-10">Carrito vacío</p>
+                        </div>
+
+                        <div class="p-6 bg-slate-900 border-t border-slate-800">
+                            <div class="flex justify-between text-slate-400 mb-1"><span>Subtotal:</span> <span id="pos-subtotal">$0.00</span></div>
+                            <div class="flex justify-between text-slate-400 mb-3"><span>Impuestos:</span> <span id="pos-tax">$0.00</span></div>
+                            <div class="flex justify-between text-white text-xl font-bold mb-6"><span>Total:</span> <span id="pos-total">$0.00</span></div>
+                            
+                            <button onclick="processSale()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg font-bold shadow-lg shadow-emerald-500/20 transition-all">
+                                CONFIRMAR VENTA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // VISTA CLIENTES (CRM)
+        function renderCRM(container) {
+            container.innerHTML = `
+                <div class="flex justify-end mb-4">
+                    <button onclick="openAddClientModal()" class="bg-primary-600 text-white px-4 py-2 rounded-lg">Nuevo Cliente</button>
+                </div>
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-900 text-slate-400 uppercase">
+                            <tr><th>Nombre</th><th>Documento</th><th>Teléfono</th><th>Ciudad</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300">
+                            ${db.clients.map(c => `
+                                <tr>
+                                    <td class="p-4 font-bold text-white">${c.name} ${c.lastname}</td>
+                                    <td class="p-4"><span class="bg-slate-800 px-2 py-1 rounded text-xs">${c.docType}: ${c.docNum}</span></td>
+                                    <td class="p-4">${c.phone}</td>
+                                    <td class="p-4">${c.city}</td>
+                                    <td class="p-4 text-blue-400 cursor-pointer">Ver Historial</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        // VISTA FINANZAS
+        function renderFinance(container) {
+            const income = db.sales.reduce((a, b) => a + b.total, 0);
+            const expenses = db.finance.filter(f => f.type === 'expense').reduce((a, b) => a + b.amount, 0);
+            const net = income - expenses;
+
+            container.innerHTML = `
+                 <div class="grid grid-cols-3 gap-6 mb-8">
+                    <div class="glass-panel p-6 rounded-xl border-l-4 border-emerald-500">
+                        <p class="text-slate-400">Ingresos Totales</p>
+                        <h2 class="text-2xl font-bold text-white">${formatMoney(income)}</h2>
+                    </div>
+                    <div class="glass-panel p-6 rounded-xl border-l-4 border-red-500">
+                        <p class="text-slate-400">Gastos Operativos</p>
+                        <h2 class="text-2xl font-bold text-white">${formatMoney(expenses)}</h2>
+                    </div>
+                    <div class="glass-panel p-6 rounded-xl border-l-4 border-blue-500">
+                        <p class="text-slate-400">Flujo Neto</p>
+                        <h2 class="text-2xl font-bold text-blue-400">${formatMoney(net)}</h2>
+                    </div>
+                 </div>
+                 
+                 <div class="glass-panel p-6 rounded-2xl">
+                    <h3 class="font-bold text-white mb-4">Registro de Movimientos Financieros</h3>
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-slate-500 border-b border-slate-700"><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Monto</th></tr></thead>
+                        <tbody class="text-slate-300 divide-y divide-slate-800">
+                            ${db.finance.map(f => `
+                                <tr>
+                                    <td class="py-3">${new Date(f.date).toLocaleDateString()}</td>
+                                    <td class="py-3">${f.concept}</td>
+                                    <td class="py-3"><span class="${f.type === 'income' ? 'text-emerald-400' : 'text-red-400'} uppercase text-xs font-bold">${f.type === 'income' ? 'Ingreso' : 'Gasto'}</span></td>
+                                    <td class="py-3 font-mono">${formatMoney(f.amount)}</td>
+                                </tr>
+                            `).join('')}
+                             ${db.sales.map(s => `
+                                <tr>
+                                    <td class="py-3">${new Date(s.date).toLocaleDateString()}</td>
+                                    <td class="py-3">Venta POS #${s.id.substr(0,4)}</td>
+                                    <td class="py-3"><span class="text-emerald-400 uppercase text-xs font-bold">Ingreso</span></td>
+                                    <td class="py-3 font-mono">${formatMoney(s.total)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                 </div>
+            `;
+        }
+
+        // --- 4. LÓGICA DE MODALES Y FORMULARIOS ---
+
+        function openModal(html) {
+            document.getElementById('modal-body').innerHTML = html;
+            document.getElementById('modal-overlay').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+        }
+
+        // Formulario Nuevo Producto
+        function openAddProductModal() {
+            openModal(`
+                <h3 class="text-xl font-bold text-white mb-6">Agregar Nuevo Producto</h3>
+                <form onsubmit="saveProduct(event)" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Tipo</label>
+                            <select id="prod-type" onchange="toggleImeiField()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
+                                <option value="mobile">Dispositivo Móvil</option>
+                                <option value="accessory">Accesorio</option>
+                                <option value="service">Servicio</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Nombre / Modelo</label>
+                            <input type="text" id="prod-name" required class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
+                        </div>
+                    </div>
+
+                    <div id="imei-field">
+                        <label class="block text-sm text-slate-400 mb-1">IMEI / Serial (Único)</label>
+                        <input type="text" id="prod-imei" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Costo Compra</label>
+                            <input type="number" id="prod-cost" required class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Precio Venta</label>
+                            <input type="number" id="prod-price" required class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                         <div>
+                            <label class="block text-sm text-slate-400 mb-1">Cantidad Inicial</label>
+                            <input type="number" id="prod-qty" value="1" required class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Categoría</label>
+                             <input type="text" id="prod-cat" placeholder="Ej. iPhone, Samsung, Fundas" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-primary-600 hover:bg-primary-500 text-white py-2 rounded mt-4">Guardar en Inventario</button>
+                </form>
+            `);
+        }
+
+        function toggleImeiField() {
+            const type = document.getElementById('prod-type').value;
+            const field = document.getElementById('imei-field');
+            if (type === 'mobile') field.style.display = 'block';
+            else field.style.display = 'none';
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const newItem = {
+                id: generateId(),
+                type: document.getElementById('prod-type').value,
+                name: document.getElementById('prod-name').value,
+                imei: document.getElementById('prod-imei').value,
+                cost: parseFloat(document.getElementById('prod-cost').value),
+                price: parseFloat(document.getElementById('prod-price').value),
+                qty: parseInt(document.getElementById('prod-qty').value),
+                category: document.getElementById('prod-cat').value
+            };
+            
+            db.inventory.push(newItem);
+            saveData(DB_KEYS.INVENTORY, db.inventory);
+            closeModal();
+            navigate('inventory'); // Recargar vista
+        }
+
+        // Formulario Nuevo Cliente
+        function openAddClientModal() {
+            openModal(`
+                <h3 class="text-xl font-bold text-white mb-6">Registrar Cliente</h3>
+                <form onsubmit="saveClient(event)" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="cli-name" placeholder="Nombres" required class="bg-slate-800 border border-slate-700 rounded p-2 text-white w-full">
+                        <input type="text" id="cli-lastname" placeholder="Apellidos" required class="bg-slate-800 border border-slate-700 rounded p-2 text-white w-full">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <select id="cli-doctype" class="bg-slate-800 border border-slate-700 rounded p-2 text-white w-full">
+                            <option value="CEDULA">Cédula</option>
+                            <option value="PASAPORTE">Pasaporte</option>
+                            <option value="LICENCIA">Licencia</option>
+                        </select>
+                        <input type="text" id="cli-docnum" placeholder="Número Documento" required class="bg-slate-800 border border-slate-700 rounded p-2 text-white w-full">
+                    </div>
+                    <input type="text" id="cli-address" placeholder="Dirección / Calle / Casa" class="bg-slate-800 border border-slate-700 rounded p-2 text-white w-full">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="cli-city" placeholder="Ciudad" class="bg-slate-800 border border-slate-700 rounded p-2 text-white w-full">
+                        <input type="text" id="cli-phone" placeholder="Teléfono" required class="bg-slate-800 border border-slate-700 rounded p-2 text-white w-full">
+                    </div>
+                    
+                    <h4 class="text-white font-bold mt-4 border-t border-slate-700 pt-2">Datos del Garante (Opcional)</h4>
+                    <input type="text" id="cli-garante-name" placeholder="Nombre Garante" class="bg-slate-800 border border-slate-700 rounded p-2 text-white w-full">
+                    <input type="text" id="cli-garante-phone" placeholder="Teléfono Garante" class="bg-slate-800 border border-slate-700 rounded p-2 text-white w-full">
+
+                    <button type="submit" class="w-full bg-primary-600 text-white py-2 rounded mt-2">Guardar Cliente</button>
+                </form>
+            `);
+        }
+
+        function saveClient(e) {
+            e.preventDefault();
+            const newClient = {
+                id: generateId(),
+                name: document.getElementById('cli-name').value,
+                lastname: document.getElementById('cli-lastname').value,
+                docType: document.getElementById('cli-doctype').value,
+                docNum: document.getElementById('cli-docnum').value,
+                address: document.getElementById('cli-address').value,
+                city: document.getElementById('cli-city').value,
+                phone: document.getElementById('cli-phone').value,
+                garante: {
+                    name: document.getElementById('cli-garante-name').value,
+                    phone: document.getElementById('cli-garante-phone').value
+                }
+            };
+            db.clients.push(newClient);
+            saveData(DB_KEYS.CLIENTS, db.clients);
+            closeModal();
+            // Si estamos en POS, refrescar solo dropdown es muy complejo en vanilla puro, mejor recargar vista
+            if(document.getElementById('pos-client-select')) navigate('pos');
+            else navigate('crm');
+        }
+
+        // --- 5. LÓGICA DE CARRITO (POS) ---
+        let cart = [];
+
+        function addToCart(productId) {
+            const product = db.inventory.find(p => p.id === productId);
+            if (!product || product.qty <= 0) return alert('Sin stock');
+
+            const existing = cart.find(c => c.id === productId);
+            if (existing) {
+                if (existing.qtyInCart < product.qty) existing.qtyInCart++;
+            } else {
+                cart.push({ ...product, qtyInCart: 1 });
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('pos-cart-items');
+            if(!container) return;
+            
+            container.innerHTML = cart.map((item, index) => `
+                <div class="flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700">
+                    <div class="truncate w-32 text-white text-sm">${item.name}</div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="changeCartQty(${index}, -1)" class="text-slate-400 hover:text-white px-1">-</button>
+                        <span class="text-white font-bold">${item.qtyInCart}</span>
+                        <button onclick="changeCartQty(${index}, 1)" class="text-slate-400 hover:text-white px-1">+</button>
+                    </div>
+                    <div class="text-emerald-400 font-mono text-sm">${formatMoney(item.price * item.qtyInCart)}</div>
+                    <button onclick="removeFromCart(${index})" class="text-red-500 ml-2"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `).join('');
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qtyInCart), 0);
+            const tax = subtotal * 0.18; // 18% ITBIS/IVA Ejemplo
+            const total = subtotal + tax;
+
+            document.getElementById('pos-subtotal').innerText = formatMoney(subtotal);
+            document.getElementById('pos-tax').innerText = formatMoney(tax);
+            document.getElementById('pos-total').innerText = formatMoney(total);
+        }
+
+        function changeCartQty(index, delta) {
+            const item = cart[index];
+            const originalProduct = db.inventory.find(p => p.id === item.id);
+            
+            if (delta > 0 && item.qtyInCart >= originalProduct.qty) return alert('No hay más stock');
+            item.qtyInCart += delta;
+            if (item.qtyInCart <= 0) cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function processSale() {
+            if (cart.length === 0) return alert('Carrito vacío');
+            
+            const clientId = document.getElementById('pos-client-select').value;
+            // No obligar cliente para venta rápida, pero idealmente sí.
+            
+            // 1. Reducir Inventario
+            cart.forEach(cartItem => {
+                const product = db.inventory.find(p => p.id === cartItem.id);
+                if (product) product.qty -= cartItem.qtyInCart;
+            });
+            saveData(DB_KEYS.INVENTORY, db.inventory);
+
+            // 2. Guardar Venta
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qtyInCart), 0) * 1.18;
+            const sale = {
+                id: generateId(),
+                date: new Date().toISOString(),
+                clientId: clientId || 'General',
+                items: cart,
+                total: total,
+                cost: cart.reduce((sum, item) => sum + (item.cost * item.qtyInCart), 0)
+            };
+            db.sales.push(sale);
+            saveData(DB_KEYS.SALES, db.sales);
+
+            // 3. Reset
+            cart = [];
+            alert('¡Venta Exitosa!');
+            navigate('pos'); // Refrescar stock visual
+        }
+
+        // --- Funciones Auxiliares ---
+        function resetSystem() {
+            if(confirm("¿ESTÁS SEGURO? Se borrará TODO el sistema.")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // Inicializar
+        window.onload = () => {
+            navigate('dashboard');
+        };
+
+        // --- Módulos Adicionales (Placeholders funcionales) ---
+        function renderLogistics(c) { c.innerHTML = '<div class="glass-panel p-8 text-center text-white"><h3>Módulo Logística: Lista de Proveedores y Órdenes de Compra (En Desarrollo Visual)</h3></div>'; }
+        function renderHR(c) { c.innerHTML = '<div class="glass-panel p-8 text-center text-white"><h3>Módulo RRHH: Nómina de Empleados (En Desarrollo Visual)</h3></div>'; }
+        function renderConfig(c) { c.innerHTML = '<div class="glass-panel p-8 text-center text-white"><h3>Configuración General del Sistema</h3><p>Aquí irán los parámetros de empresa y backup.</p></div>'; }
+
+    </script>
+</body>
+</html>
